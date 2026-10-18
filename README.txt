@@ -1,0 +1,1 @@
+Démo interactive ProxiPro. Ouvrir app/index.html. Parcourir Accueil, Connexion, création de compte, demande ménage détaillée, sélection multiple, photos, espace professionnel, prospects 7/12/20 €, paiement de démonstration, coordonnées, administration. Responsive téléphone/tablette/ordinateur. Paiement et comptes sont simulés.
