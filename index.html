@@ -131,7 +131,90 @@ async function send() {
   setTimeout(() => go("pro"), 600);
 }
 
-function renderLeads(){leads.innerHTML=`<div class="lead"><b>Nouvelle demande — ${lead.city}</b><p>${lead.surface} m² • ${lead.rooms} pièces • ${lead.date}</p><p>${lead.services.join(" • ")}</p><p>${lead.desc}</p><button class="btn blue" onclick="go('detail')">Voir le prospect</button></div><div class="lead"><b>Grand ménage — Vernon</b><p>120 m² • vitres + cuisine + sols</p><button class="btn blue" onclick="go('detail')">Voir</button></div>`}
+
+async function renderLeads() {
+  const container = document.getElementById("leads");
+
+  container.innerHTML = "<p>Chargement des prospects...</p>";
+
+  const { data: { user }, error: authError } =
+    await supabaseClient.auth.getUser();
+
+  if (authError || !user) {
+    container.innerHTML =
+      "<p>Connectez-vous pour consulter les prospects.</p>";
+    return;
+  }
+
+  const { data: demands, error } = await supabaseClient
+    .from("demandes")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Erreur de chargement :", error);
+    container.innerHTML =
+      "<p>Impossible de charger les prospects : " +
+      error.message + "</p>";
+    return;
+  }
+
+  if (!demands || demands.length === 0) {
+    container.innerHTML = "<p>Aucun prospect enregistré pour le moment.</p>";
+    return;
+  }
+
+  container.innerHTML = demands.map((d, index) => {
+    const services = Array.isArray(d.services)
+      ? d.services.join(", ")
+      : (d.services || d.service || "Prestation de ménage");
+
+    const city = d.city || d.ville || "Ville non renseignée";
+    const surface = d.surface ?? d.surface_m2 ?? "?";
+    const rooms = d.rooms ?? d.pieces ?? "?";
+    const date = d.date || d.requested_date || "À définir";
+
+    return `
+      <div class="lead">
+        <b>Prospect — ${city}</b>
+        <p>${surface} m² • ${rooms} pièces • ${date}</p>
+        <p>${services}</p>
+        <button class="btn blue"
+          onclick="openLead(${index})">
+          Voir le prospect
+        </button>
+      </div>
+    `;
+  }).join("");
+
+  window.loadedLeads = demands;
+}
+
+function openLead(index) {
+  const d = window.loadedLeads?.[index];
+
+  if (!d) {
+    alert("Prospect introuvable.");
+    return;
+  }
+
+  window.currentLead = d;
+
+  lead = {
+    id: d.id,
+    city: d.city || d.ville || "Ville non renseignée",
+    surface: String(d.surface ?? d.surface_m2 ?? "?"),
+    rooms: String(d.rooms ?? d.pieces ?? "?"),
+    date: d.date || d.requested_date || "À définir",
+    services: Array.isArray(d.services)
+      ? d.services
+      : [d.services || d.service || "Ménage"],
+    desc: d.desc || d.description || ""
+  };
+
+  go("detail");
+}
+
 function renderDetail(){details.innerHTML=`<p><b>Ville :</b> ${lead.city}</p><p><b>Logement :</b> ${lead.surface} m² • ${lead.rooms} pièces</p><p><b>Prestations :</b> ${lead.services.join(", ")}</p><p><b>Date :</b> ${lead.date}</p><p><b>Description :</b> ${lead.desc}</p><div class="ok">Les coordonnées restent masquées avant paiement.</div>`}
 
 
