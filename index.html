@@ -71,7 +71,66 @@ const cats={"🏠 Ménage courant":["Ménage régulier","Ménage ponctuel","Gran
 const S=document.getElementById('services');for(const [c,a] of Object.entries(cats)){S.innerHTML+=`<h3>${c}</h3><div class="checks">${a.map(x=>`<label class="check"><input type="checkbox" value="${x}"> ${x}</label>`).join('')}</div>`}
 let lead={city:"Évreux",surface:"90",rooms:"4",date:"À définir",services:["Ménage complet"],desc:"Nettoyage complet d'une maison."};
 function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.add('hide'));document.getElementById(id).classList.remove('hide');if(id==='pro')renderLeads();if(id==='detail')renderDetail();scrollTo(0,0)}
-function send(){lead={city:city.value||"Évreux",surface:surface.value||"90",rooms:rooms.value||"4",date:date.value||"À définir",services:[...document.querySelectorAll('#services input:checked')].map(x=>x.value),desc:desc.value||"Demande détaillée."};if(!lead.services.length)lead.services=["Ménage complet"];sent.innerHTML='<div class="ok">✓ Demande enregistrée. Les professionnels compatibles peuvent maintenant la consulter.</div>';setTimeout(()=>go('pro'),600)}
+
+async function send() {
+  const { data: { user }, error: authError } =
+    await supabaseClient.auth.getUser();
+
+  if (authError) {
+    alert("Erreur : " + authError.message);
+    return;
+  }
+
+  if (!user) {
+    alert("Connectez-vous avant d'envoyer votre demande.");
+    go("login");
+    return;
+  }
+
+  const selectedServices = [
+    ...document.querySelectorAll("#services input:checked")
+  ].map(x => x.value);
+
+  if (!selectedServices.length) {
+    alert("Sélectionnez au moins une prestation.");
+    return;
+  }
+
+  const demand = {
+    client_id: user.id,
+    city: document.getElementById("city").value || "Évreux",
+    surface: Number(document.getElementById("surface").value) || 90,
+    rooms: Number(document.getElementById("rooms").value) || 4,
+    date: document.getElementById("date").value || null,
+    services: selectedServices,
+    desc: document.getElementById("desc").value || "",
+    status: "available"
+  };
+
+  const { error } = await supabaseClient
+    .from("demandes")
+    .insert(demand);
+
+  if (error) {
+    console.error(error);
+    alert("Erreur d'enregistrement : " + error.message);
+    return;
+  }
+
+  document.getElementById("sent").innerHTML =
+    '<div class="ok">✓ Votre demande est enregistrée.</div>';
+
+  lead = {
+    ...demand,
+    surface: String(demand.surface),
+    rooms: String(demand.rooms),
+    services: selectedServices,
+    desc: demand.desc
+  };
+
+  setTimeout(() => go("pro"), 600);
+}
+
 function renderLeads(){leads.innerHTML=`<div class="lead"><b>Nouvelle demande — ${lead.city}</b><p>${lead.surface} m² • ${lead.rooms} pièces • ${lead.date}</p><p>${lead.services.join(" • ")}</p><p>${lead.desc}</p><button class="btn blue" onclick="go('detail')">Voir le prospect</button></div><div class="lead"><b>Grand ménage — Vernon</b><p>120 m² • vitres + cuisine + sols</p><button class="btn blue" onclick="go('detail')">Voir</button></div>`}
 function renderDetail(){details.innerHTML=`<p><b>Ville :</b> ${lead.city}</p><p><b>Logement :</b> ${lead.surface} m² • ${lead.rooms} pièces</p><p><b>Prestations :</b> ${lead.services.join(", ")}</p><p><b>Date :</b> ${lead.date}</p><p><b>Description :</b> ${lead.desc}</p><div class="ok">Les coordonnées restent masquées avant paiement.</div>`}
 
