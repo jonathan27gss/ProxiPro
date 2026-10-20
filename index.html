@@ -113,4 +113,14 @@ async function pay(n) {
 }
 
 
+const paymentStatus = new URLSearchParams(window.location.search).get("payment");
+
+if (paymentStatus === "success") {
+  alert("Paiement de test confirmé ! Merci d'utiliser ProxiPro.");
+  window.history.replaceState({}, document.title, window.location.pathname);
+} else if (paymentStatus === "cancelled") {
+  alert("Paiement annulé. Vous pouvez réessayer depuis ProxiPro.");
+  window.history.replaceState({}, document.title, window.location.pathname);
+}
+
 </script></body></html>
