@@ -75,16 +75,42 @@ function send(){lead={city:city.value||"Évreux",surface:surface.value||"90",roo
 function renderLeads(){leads.innerHTML=`<div class="lead"><b>Nouvelle demande — ${lead.city}</b><p>${lead.surface} m² • ${lead.rooms} pièces • ${lead.date}</p><p>${lead.services.join(" • ")}</p><p>${lead.desc}</p><button class="btn blue" onclick="go('detail')">Voir le prospect</button></div><div class="lead"><b>Grand ménage — Vernon</b><p>120 m² • vitres + cuisine + sols</p><button class="btn blue" onclick="go('detail')">Voir</button></div>`}
 function renderDetail(){details.innerHTML=`<p><b>Ville :</b> ${lead.city}</p><p><b>Logement :</b> ${lead.surface} m² • ${lead.rooms} pièces</p><p><b>Prestations :</b> ${lead.services.join(", ")}</p><p><b>Date :</b> ${lead.date}</p><p><b>Description :</b> ${lead.desc}</p><div class="ok">Les coordonnées restent masquées avant paiement.</div>`}
 
+
 async function pay(n) {
-  const { data: { session } } = await supabaseClient.auth.getSession();
+  try {
+    const { data: { session }, error: sessionError } =
+      await supabaseClient.auth.getSession();
 
-  if (!session) {
-    alert("Connectez-vous à votre compte avant de payer.");
-    go('login');
-    return;
+    if (sessionError || !session) {
+      alert("Connectez-vous avant de payer.");
+      go('login');
+      return;
+    }
+
+    const { data, error } = await supabaseClient.functions.invoke(
+      'create-checkout',
+      {
+        body: { amount: n }
+      }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data || !data.url) {
+      throw new Error(
+        data?.error || "Impossible de créer la session de paiement."
+      );
+    }
+
+    window.location.href = data.url;
+
+  } catch (error) {
+    console.error("Erreur Stripe :", error);
+    alert("Erreur de paiement : " + (error.message || error));
   }
-
-  alert("La connexion à Stripe doit encore être configurée pour le paiement de " + n + " €.");
 }
+
 
 </script></body></html>
