@@ -9,7 +9,7 @@
 
 <section id="login" class="screen hide"><div class="glass"><h2>Connexion</h2><p>Choisissez votre espace.</p><button class="btn blue" onclick="go('client')">👤 Client</button> <button class="btn green" onclick="go('pro')">🧹 Professionnel</button><hr><button class="btn blue" onclick="go('register')">Créer un compte</button></div></section>
 
-<section id="register" class="screen hide"><div class="glass"><h2>Créer un compte</h2><div class="grid"><div><label>Type</label><select class="field"><option>Client</option><option>Professionnel</option></select></div><div><label>Email</label><input class="field" placeholder="vous@exemple.fr"></div><div><label>Nom / entreprise</label><input class="field"></div><div><label>Téléphone</label><input class="field"></div><div><label>Ville</label><input class="field" placeholder="Évreux"></div><div><label>Mot de passe</label><input class="field" type="password"></div></div><br><button class="btn green" onclick="alert('Compte de démonstration créé');go('home')">Créer mon compte</button></div></section>
+<section id="register" class="screen hide"><div class="glass"><h2>Créer un compte</h2><div class="grid"><div><label>Type</label><select class="field"><option>Client</option><option>Professionnel</option></select></div><div><label>Email</label><input class="field" placeholder="vous@exemple.fr"></div><div><label>Nom / entreprise</label><input class="field"></div><div><label>Téléphone</label><input class="field"></div><div><label>Ville</label><input class="field" placeholder="Évreux"></div><div><label>Mot de passe</label><input class="field" type="password"></div></div><br><button class="btn green"onclick="registerUser()" >Créer mon compte</button></div></section>
 
 <section id="client" class="screen hide"><div class="glass"><h2>Demande de ménage</h2><div class="steps"><span class="step on">1 Prestations</span><span class="step on">2 Logement</span><span class="step on">3 Date & photos</span><span class="step">4 Confirmation</span></div><p>Plusieurs choix possibles, avec « Autre » dans chaque catégorie.</p><div id="services"></div><div class="grid"><div><label>Surface</label><input id="surface" class="field" type="number" placeholder="90"></div><div><label>Nombre de pièces</label><input id="rooms" class="field" type="number" placeholder="4"></div><div><label>Ville</label><input id="city" class="field" value="Évreux"></div><div><label>Date souhaitée</label><input id="date" class="field" type="date"></div><div class="full"><label>Description</label><textarea id="desc" class="field" rows="4" placeholder="Expliquez votre besoin..."></textarea></div><div class="full"><label>Photos</label><input class="field" type="file" accept="image/*" multiple></div></div><br><button class="btn green" onclick="send()">Envoyer ma demande gratuitement</button><div id="sent"></div></div></section>
 
@@ -22,7 +22,28 @@
  <script>
 const SUPABASE_URL = "https://dzqdmlyzvmzicnbujgbn.supabase.co";
 const SUPABASE_KEY = "sb_publishable_9HER2NUu-B103P6dsYkkdHg_mx4vD4wQ";
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);async function registerUser() {
+  const email = document.querySelector('#register input[placeholder="vous@exemple.fr"]').value;
+  const password = document.querySelector('#register input[type="password"]').value;
+
+  if (!email || !password) {
+    alert("Veuillez renseigner votre email et votre mot de passe.");
+    return;
+  }
+
+  const { data, error } = await supabaseClient.auth.signUp({
+    email: email,
+    password: password
+  });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  alert("Compte créé ! Vérifiez votre email pour confirmer votre inscription.");
+  go('home');
+}
 const cats={"🏠 Ménage courant":["Ménage régulier","Ménage ponctuel","Grand ménage","Ménage complet","Ménage express / rapide","Ménage avant/après événement","Ménage après absence ou vacances","Autre"],"🛋️ Pièces":["Cuisine","Salle de bain","WC","Salon / séjour","Chambres","Escaliers","Couloirs","Garage / sous-sol","Autre"],"✨ Nettoyage approfondi":["Sols","Aspirateur","Lavage des sols","Dépoussiérage complet","Portes","Plinthes","Interrupteurs et prises","Meubles","Intérieur des placards","Autre"],"🪟 Vitres":["Vitres intérieur","Vitres intérieur + extérieur","Baies vitrées","Velux","Véranda","Autre"],"🍳 Cuisine":["Four","Réfrigérateur","Congélateur","Hotte","Appareils électroménagers","Dégraissage cuisine","Autre"],"🚿 Salle de bain":["Douche","Baignoire","Lavabo","Détartrage","Joints","Désinfection","Autre"],"📦 Déménagement":["Avant déménagement","Après déménagement","Nettoyage état des lieux","Logement vacant","Après travaux","Autre"],"🏢 Professionnel":["Bureaux","Commerce","Cabinet professionnel","Location courte durée","Airbnb","Parties communes","Autre"],"🧽 Spécifique":["Nettoyage après travaux","Désinfection","Canapé","Matelas","Tapis","Moquette","Autre"]};
 const S=document.getElementById('services');for(const [c,a] of Object.entries(cats)){S.innerHTML+=`<h3>${c}</h3><div class="checks">${a.map(x=>`<label class="check"><input type="checkbox" value="${x}"> ${x}</label>`).join('')}</div>`}
 let lead={city:"Évreux",surface:"90",rooms:"4",date:"À définir",services:["Ménage complet"],desc:"Nettoyage complet d'une maison."};
