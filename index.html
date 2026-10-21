@@ -218,6 +218,7 @@ function openLead(index) {
 function renderDetail(){details.innerHTML=`<p><b>Ville :</b> ${lead.city}</p><p><b>Logement :</b> ${lead.surface} m² • ${lead.rooms} pièces</p><p><b>Prestations :</b> ${lead.services.join(", ")}</p><p><b>Date :</b> ${lead.date}</p><p><b>Description :</b> ${lead.desc}</p><div class="ok">Les coordonnées restent masquées avant paiement.</div>`}
 
 
+
 async function pay(n) {
   try {
     const { data: { session }, error: sessionError } =
@@ -225,14 +226,24 @@ async function pay(n) {
 
     if (sessionError || !session) {
       alert("Connectez-vous avant de payer.");
-      go('login');
+      go("login");
+      return;
+    }
+
+    const selectedLead = window.currentLead || lead;
+
+    if (!selectedLead || !selectedLead.id) {
+      alert("Impossible d'identifier le prospect à acheter.");
       return;
     }
 
     const { data, error } = await supabaseClient.functions.invoke(
-      'create-checkout',
+      "create-checkout",
       {
-        body: { amount: n }
+        body: {
+          amount: n,
+          lead_id: selectedLead.id
+        }
       }
     );
 
@@ -253,6 +264,7 @@ async function pay(n) {
     alert("Erreur de paiement : " + (error.message || error));
   }
 }
+
 
 
 const paymentStatus = new URLSearchParams(window.location.search).get("payment");
