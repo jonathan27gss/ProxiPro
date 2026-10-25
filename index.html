@@ -108,7 +108,7 @@ async function send() {
   };
 
   const { error } = await supabaseClient
-    .from("demandes")
+    .from("leads")
     .insert(demand);
 
   if (error) {
