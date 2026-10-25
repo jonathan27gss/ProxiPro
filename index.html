@@ -146,10 +146,12 @@ async function renderLeads() {
     return;
   }
 
+  
   const { data: demands, error } = await supabaseClient
-    .from("demandes")
+    .from("leads")
     .select("*")
     .order("created_at", { ascending: false });
+
 
   if (error) {
     console.error("Erreur de chargement :", error);
